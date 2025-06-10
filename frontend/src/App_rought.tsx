@@ -3,7 +3,7 @@ import { useState, useRef, useCallback } from 'react';
 import { Button } from './components/ui/button';
 import { Card } from './components/ui/card';
 import { ScrollArea } from './components/ui/scroll-area';
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "@/context/theme-provider"
 
 interface TranscriptData {
   type: 'partial' | 'final';
