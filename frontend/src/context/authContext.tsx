@@ -1,7 +1,6 @@
 import { createContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  type Auth,
   type User,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -14,11 +13,10 @@ import {
   EmailAuthProvider,
   reauthenticateWithCredential
 } from "firebase/auth";
-import { auth } from "@/firebase/config"; // You'll need to create this file
+import { auth } from "@/firebase/config";
 
 interface AuthContextType {
   user: User | null;
-  isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
   handleError: (error: string) => void;
@@ -33,7 +31,6 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
-  isAuthenticated: false,
   loading: false,
   error: null,
   handleError: () => {},
@@ -52,6 +49,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
 
   const navigate = useNavigate();
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log(user)
+      setUser(user);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleError = (error: unknown) => {
     let message = "An unexpected error occurred";
@@ -86,18 +92,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     throw new Error(message);
   };
 
-  // Listen for authentication state changes
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
+  
 
   const login = async (email: string, password: string) => {
-    console.log("clicking login")
     setLoading(true);
     setError(null);
     try {
@@ -117,12 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       setUser(userCredential.user);
-      
-      // Automatically send email verification
       await sendEmailVerification(userCredential.user);
-      
-      // Optional: You might want to navigate to a verification page instead
-      // navigate("/verify-email");
     } catch (error) {
       handleError(error);
     } finally {
@@ -204,11 +196,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+
   return (
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: user?true:false,
         loading,
         error,
         handleError,

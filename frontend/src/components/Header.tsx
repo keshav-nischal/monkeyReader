@@ -9,7 +9,7 @@ const Header = () => {
         <Logo></Logo>
         <DropdownMenu>
             <DropdownMenuTrigger>
-                <Button variant="outline">Profile</Button>        
+                Profile        
             </DropdownMenuTrigger>
             <DropdownMenuContent>
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
