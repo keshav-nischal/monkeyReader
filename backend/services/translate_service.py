@@ -1,16 +1,16 @@
 from fastapi import WebSocketDisconnect
 import asyncio
 import json
-from reading_tracker_service import ReadingTracker
+from services.reading_tracker_service import ReadingTracker
 from vosk import Model, KaldiRecognizer
 
 
-# model = Model("ml-models/vosk-model-en-us-0.22-lgraph")
-model = Model("ml-models/vosk-model-en-us-0.42-gigaspeech")
-
-rec = KaldiRecognizer(model, 16000)
 
 async def translationConsumer(websocket, sharedQueue, reading_tracker: ReadingTracker):
+    # model = Model("ml-models/vosk-model-en-us-0.22-lgraph")
+    model = Model("ml-models/vosk-model-en-us-0.42-gigaspeech")
+
+    rec = KaldiRecognizer(model, 16000)
     try: 
         while True:
             if len(sharedQueue) > 0:

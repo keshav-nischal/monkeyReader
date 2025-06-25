@@ -14,7 +14,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ startForgotPassword, infoM
   const authContext = useContext(AuthContext);
 
   if (!authContext) {
-    throw new Error('LoginForm must be used within an AuthProvider');
+    throw new Error('LoginForm mus  t be used within an AuthProvider');
   }
 
   const { login, error, loading } = authContext;

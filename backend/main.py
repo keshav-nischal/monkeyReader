@@ -40,7 +40,17 @@ async def verify_token(request: Request):
         verify_token_and_get_user(token)
     else:
         raise HTTPException(401, "token type is not present")
-    
+
+@app.get("books/all")   
+async def all_books():
+    books = [
+        {"title": "1984", "author": "George Orwell", "totalPages": 328, "pagesRead": 0, "BookSymbol": "Rocket"},
+        {"title": "Brave New World", "author": "Aldous Huxley", "totalPages": 311, "pagesRead": 124, "BookSymbol": "Brain"},
+        {"title": "To Kill a Mockingbird", "author": "Harper Lee", "totalPages": 281, "pagesRead": 50, "BookSymbol": "Ghost"},
+        {"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "totalPages": 180, "pagesRead": 180, "BookSymbol": "Star"},
+    ]
+    return books
+
 
 @app.websocket("/ws") 
 async def websocket_endpoint(websocket: WebSocket):
@@ -101,9 +111,8 @@ def main():
     # print(t)
     # print([mark.value for mark in passage.marks])
     # l2 = 
+    # result = verify_token_and_get_user("eyJhbGciOiJSUzI1NiIsImtpZCI6ImE0YTEwZGVjZTk4MzY2ZDZmNjNlMTY3Mjg2YWU5YjYxMWQyYmFhMjciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vbW9ua2V5LXJlYWQtODA0MWYiLCJhdWQiOiJtb25rZXktcmVhZC04MDQxZiIsImF1dGhfdGltZSI6MTc1MDAyNDI0MCwidXNlcl9pZCI6IkpKZkYwaThGSDVZY1ZnSWpMOHIwV28wVEt2dDEiLCJzdWIiOiJKSmZGMGk4Rkg1WWNWZ0lqTDhyMFdvMFRLdnQxIiwiaWF0IjoxNzUwMDI0MjQwLCJleHAiOjE3NTAwMjc4NDAsImVtYWlsIjoia2VzaGF2bmlzY2hhbEBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJrZXNoYXZuaXNjaGFsQGdtYWlsLmNvbSJdfSwic2lnbl9pbl9wcm92aWRlciI6InBhc3N3b3JkIn19.McaDm0LKYOqGm7CfOOn6SPJH9Tdgx_bJGupSt7tIW2qx4GhWnL5l7_ptFPYAcKmc16ZmBpdI87dYhbY6GeExYZZ7lyFVC4o0NbQ3vjXv3N7f0MOvjyR6sapdg0DU-8JrZ6dGgDUSZN4unJQWk-mtpFUtMRmAFf7iLdGlRU8EiFG-t0PTDLYlxhuunOwKkD9rLcslnsAoWysjwP708qBscr8k2XTIF-WFHndjDEq4vn9Wkmx39YinC2cb52XiQVu7JWLkvQe_20TJPIRKfQqVMjXKoIQbwS4ALS40t0wnNQm4DjAjx4MSfCjAnOTzUU2tBn9mfyD2z7BPGIRRYdncDg")
+    # print(result)
 
-    result = verify_token_and_get_user("eyJhbGciOiJSUzI1NiIsImtpZCI6ImE0YTEwZGVjZTk4MzY2ZDZmNjNlMTY3Mjg2YWU5YjYxMWQyYmFhMjciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vbW9ua2V5LXJlYWQtODA0MWYiLCJhdWQiOiJtb25rZXktcmVhZC04MDQxZiIsImF1dGhfdGltZSI6MTc1MDAyNDI0MCwidXNlcl9pZCI6IkpKZkYwaThGSDVZY1ZnSWpMOHIwV28wVEt2dDEiLCJzdWIiOiJKSmZGMGk4Rkg1WWNWZ0lqTDhyMFdvMFRLdnQxIiwiaWF0IjoxNzUwMDI0MjQwLCJleHAiOjE3NTAwMjc4NDAsImVtYWlsIjoia2VzaGF2bmlzY2hhbEBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJrZXNoYXZuaXNjaGFsQGdtYWlsLmNvbSJdfSwic2lnbl9pbl9wcm92aWRlciI6InBhc3N3b3JkIn19.McaDm0LKYOqGm7CfOOn6SPJH9Tdgx_bJGupSt7tIW2qx4GhWnL5l7_ptFPYAcKmc16ZmBpdI87dYhbY6GeExYZZ7lyFVC4o0NbQ3vjXv3N7f0MOvjyR6sapdg0DU-8JrZ6dGgDUSZN4unJQWk-mtpFUtMRmAFf7iLdGlRU8EiFG-t0PTDLYlxhuunOwKkD9rLcslnsAoWysjwP708qBscr8k2XTIF-WFHndjDEq4vn9Wkmx39YinC2cb52XiQVu7JWLkvQe_20TJPIRKfQqVMjXKoIQbwS4ALS40t0wnNQm4DjAjx4MSfCjAnOTzUU2tBn9mfyD2z7BPGIRRYdncDg")
-
-    print(result)
 if __name__ == "__main__":
     main()
