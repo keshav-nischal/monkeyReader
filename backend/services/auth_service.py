@@ -1,4 +1,5 @@
-from fastapi import HTTPException
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import firebase_admin
 from firebase_admin import credentials, auth
 import os
@@ -14,13 +15,19 @@ service_account_path = os.path.join(
 cred = credentials.Certificate(os.path.abspath(service_account_path))
 app = firebase_admin.initialize_app(cred)
 
-def verify_token_and_get_user(id_token: str) -> Optional[firebase_auth.UserRecord]:
+# Create security scheme
+security = HTTPBearer()
+
+def verify_token_and_get_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Optional[firebase_auth.UserRecord]:
     try:
+        id_token = credentials.credentials
         decoded_token = auth.verify_id_token(id_token)
+        # print(decoded_token)
         uid = decoded_token['uid']
         user_record = auth.get_user(uid)
         print(user_record)
         return user_record
     except Exception as e:
-        # Log the error or handle it appropriately
-        raise HTTPException("401", f"Error verifying user: {e}")
+        print(e)
+        raise HTTPException(status_code=401, detail=f"Error verifying user: {e}")
+

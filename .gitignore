@@ -197,7 +197,7 @@ cython_debug/
 
 
 # FRONTEND
-
+firebase
 # Node modules
 node_modules/
 
