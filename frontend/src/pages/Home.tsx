@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress';
 import { type LucideIcon } from 'lucide-react';
-import React from 'react'
+import React, { useContext } from 'react'
 import { Rocket } from 'lucide-react';
-
+import axios from 'axios';
+import { AuthContext } from '@/context/authContext';
 
 type Book = {
     title: string;
@@ -64,9 +65,18 @@ const Home = () => {
         { title: 'To Kill a Mockingbird', author: 'Harper Lee', totalPages: 281, pagesRead: 50 },
         { title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', totalPages: 180, pagesRead: 180 },
     ];
-
-    const debug = ():void => {
-
+    
+    const { user } = useContext(AuthContext);
+    const debug = async (): Promise<void> => {
+        // console.log(`Bearer ${user?.getIdToken()}`)
+        const token = await user?.getIdToken()
+        console.log(token)
+        const result = await axios.get("http://127.0.0.1:8012/books/owned", {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        console.log(result)
     };
 
     return (

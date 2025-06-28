@@ -1,15 +1,24 @@
+from dotenv import load_dotenv
+import os
+
+# Automatically find and load .env from the project root or current directory
+load_dotenv()
 from collections import deque
-from fastapi import FastAPI, HTTPException, Request, WebSocket
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 import uvicorn
 from starlette.middleware import Middleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 import asyncio
 
+from backend.database.main import Base, get_sql_session, engine
+from backend.models import Book
 from services.reading_tracker_service import Passage, ReadingTracker, WordMatcher
 from services.mic_stream_service import micDataProducer
 from services.translate_service import translationConsumer  
 from services.auth_service import verify_token_and_get_user
+from dotenv import load_dotenv
+
 #server
 app = FastAPI(
     middleware=[
@@ -32,25 +41,53 @@ app = FastAPI(
 async def read_root():
     return {"message": "Server is running"}
 
-@app.get("/auth/verifyToken")
-async def verify_token(request: Request):
-    auth_header = request.headers.get("Authorization")
-    [token_type, token] = auth_header.split(" ")
-    if(token_type == "Bearer"):
-        verify_token_and_get_user(token)
-    else:
-        raise HTTPException(401, "token type is not present")
-
-@app.get("books/all")   
+@app.get("/books/all")   
 async def all_books():
     books = [
-        {"title": "1984", "author": "George Orwell", "totalPages": 328, "pagesRead": 0, "BookSymbol": "Rocket"},
-        {"title": "Brave New World", "author": "Aldous Huxley", "totalPages": 311, "pagesRead": 124, "BookSymbol": "Brain"},
-        {"title": "To Kill a Mockingbird", "author": "Harper Lee", "totalPages": 281, "pagesRead": 50, "BookSymbol": "Ghost"},
-        {"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "totalPages": 180, "pagesRead": 180, "BookSymbol": "Star"},
+        {
+            "id": 1,
+            "name": "1984",
+            "author": "George Orwell",
+            "total_pages": 328,
+            "genre": "Dystopian",
+            "price": 15,
+            "img_link": "https://example.com/1984.jpg"
+        },
+        {
+            "id": 2,
+            "name": "Brave New World",
+            "author": "Aldous Huxley",
+            "total_pages": 311,
+            "genre": "Science Fiction",
+            "price": 18,
+            "img_link": "https://example.com/bravenewworld.jpg"
+        },
+        {
+            "id": 3,
+            "name": "To Kill a Mockingbird",
+            "author": "Harper Lee",
+            "total_pages": 281,
+            "genre": "Classic",
+            "price": 12,
+            "img_link": "https://example.com/tokillamockingbird.jpg"
+        },
+        {
+            "id": 4,
+            "name": "The Great Gatsby",
+            "author": "F. Scott Fitzgerald",
+            "total_pages": 180,
+            "genre": "Classic",
+            "price": 10,
+            "img_link": "https://example.com/thegreatgatsby.jpg"
+        },
     ]
     return books
 
+@app.get("/books/owned")
+async def owned_books(user = Depends(verify_token_and_get_user), sql_session = Depends(get_sql_session)):
+    print(user)
+    books = sql_session.query(Book).all()
+    print(books)
 
 @app.websocket("/ws") 
 async def websocket_endpoint(websocket: WebSocket):
@@ -94,7 +131,7 @@ async def websocket_endpoint(websocket: WebSocket):
         
         try:
             await websocket.close()
-        except:
+        except Exception:
             pass
 
 #auth -> check the  book owning status, history for current page number -> get content -> start the timer -> reading and transalations ->  end timer check if the page has been read or not(by checking if the last word is marked and if the 80 percent of content was read correctly) -> mark the history ->
@@ -111,8 +148,7 @@ def main():
     # print(t)
     # print([mark.value for mark in passage.marks])
     # l2 = 
-    # result = verify_token_and_get_user("eyJhbGciOiJSUzI1NiIsImtpZCI6ImE0YTEwZGVjZTk4MzY2ZDZmNjNlMTY3Mjg2YWU5YjYxMWQyYmFhMjciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vbW9ua2V5LXJlYWQtODA0MWYiLCJhdWQiOiJtb25rZXktcmVhZC04MDQxZiIsImF1dGhfdGltZSI6MTc1MDAyNDI0MCwidXNlcl9pZCI6IkpKZkYwaThGSDVZY1ZnSWpMOHIwV28wVEt2dDEiLCJzdWIiOiJKSmZGMGk4Rkg1WWNWZ0lqTDhyMFdvMFRLdnQxIiwiaWF0IjoxNzUwMDI0MjQwLCJleHAiOjE3NTAwMjc4NDAsImVtYWlsIjoia2VzaGF2bmlzY2hhbEBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJrZXNoYXZuaXNjaGFsQGdtYWlsLmNvbSJdfSwic2lnbl9pbl9wcm92aWRlciI6InBhc3N3b3JkIn19.McaDm0LKYOqGm7CfOOn6SPJH9Tdgx_bJGupSt7tIW2qx4GhWnL5l7_ptFPYAcKmc16ZmBpdI87dYhbY6GeExYZZ7lyFVC4o0NbQ3vjXv3N7f0MOvjyR6sapdg0DU-8JrZ6dGgDUSZN4unJQWk-mtpFUtMRmAFf7iLdGlRU8EiFG-t0PTDLYlxhuunOwKkD9rLcslnsAoWysjwP708qBscr8k2XTIF-WFHndjDEq4vn9Wkmx39YinC2cb52XiQVu7JWLkvQe_20TJPIRKfQqVMjXKoIQbwS4ALS40t0wnNQm4DjAjx4MSfCjAnOTzUU2tBn9mfyD2z7BPGIRRYdncDg")
-    # print(result)
+  
 
 if __name__ == "__main__":
     main()
