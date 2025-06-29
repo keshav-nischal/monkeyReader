@@ -11,8 +11,8 @@ from starlette.middleware import Middleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 import asyncio
 
-from backend.database.main import Base, get_sql_session, engine
-from backend.models import Book
+from app.database.main import Base, get_sql_session, engine
+from app.models import Book
 from services.reading_tracker_service import Passage, ReadingTracker, WordMatcher
 from services.mic_stream_service import micDataProducer
 from services.translate_service import translationConsumer  
