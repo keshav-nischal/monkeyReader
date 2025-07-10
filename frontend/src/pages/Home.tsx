@@ -7,8 +7,9 @@ import React, { useContext } from 'react'
 import { Rocket } from 'lucide-react';
 import axios from 'axios';
 import { AuthContext } from '@/context/authContext';
+import { useQuery } from '@tanstack/react-query';
 
-type Book = {
+type OwnedBookCardProps = {
     title: string;
     author: string;
     totalPages: number;
@@ -17,7 +18,7 @@ type Book = {
 };
 
 
-const BookCard: React.FC<Book> = ({ title, author, totalPages, pagesRead, BookSymbol }) => {
+const OwnedBookCard: React.FC<OwnedBookCardProps> = ({ title, author, totalPages, pagesRead, BookSymbol }) => {
     const progress = totalPages > 0 ? Math.round((pagesRead / totalPages) * 100) : 0;
     return (
         <Card>
@@ -58,20 +59,52 @@ const BookCard: React.FC<Book> = ({ title, author, totalPages, pagesRead, BookSy
     );
 };
 
+
+type BookCardProps = {
+    title: string;
+    author: string;
+    BookSymbol: LucideIcon;
+};
+
+const BookCard: React.FC<BookCardProps> = ({ title, author, BookSymbol }) => (
+    <Card>
+        <CardHeader>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{author}</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <span
+                role="img"
+                aria-label="book-icon"
+            >
+                <BookSymbol className="w-full h-full p-4" />
+            </span>
+        </CardContent>
+    </Card>
+);
+
+// const fetchAllBooks = async () => {
+//   const res = await axios.get('http://127.0.0.1:8012/books/all');
+//   return res.data;
+// };
+
 const Home = () => {
-    const books: Omit<Book, 'BookSymbol'>[] = [
+    const all_books: Omit<OwnedBookCardProps, 'BookSymbol'>[] = [
         { title: '1984', author: 'George Orwell', totalPages: 328, pagesRead: 0 },
         { title: 'Brave New World', author: 'Aldous Huxley', totalPages: 311, pagesRead: 124 },
         { title: 'To Kill a Mockingbird', author: 'Harper Lee', totalPages: 281, pagesRead: 50 },
         { title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', totalPages: 180, pagesRead: 180 },
     ];
-    
+    //  const { data, isLoading, error } = useQuery({
+    //     queryKey: ['users'],
+    //     queryFn: fetchAllBooks,
+    // });
     const { user } = useContext(AuthContext);
     const debug = async (): Promise<void> => {
         // console.log(`Bearer ${user?.getIdToken()}`)
         const token = await user?.getIdToken()
         console.log(token)
-        const result = await axios.get("http://127.0.0.1:8012/books/owned", {
+        const result = await axios.get("http://127.0.0.1:8012/books/all", {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -93,7 +126,7 @@ const Home = () => {
                         justifyContent: 'flex-start',
                     }}
                 >
-                    {books.map((book, idx) => (
+                    {all_books.map((book, idx) => (
                         <div
                             key={idx}
                             style={{
@@ -104,7 +137,7 @@ const Home = () => {
                                 width: '100%',
                             }}
                         >
-                            <BookCard
+                            <OwnedBookCard
                                 title={book.title}
                                 author={book.author}
                                 totalPages={book.totalPages}

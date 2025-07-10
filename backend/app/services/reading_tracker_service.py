@@ -1,5 +1,5 @@
 from typing import List
-from services.passage import Passage, Mark
+from app.services.passage import Passage, Mark
 
 class WordMatcher:
     def __init__(self, look_ahead_factor: int = 8):

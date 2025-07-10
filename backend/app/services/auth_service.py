@@ -25,7 +25,6 @@ def verify_token_and_get_user(credentials: HTTPAuthorizationCredentials = Depend
         # print(decoded_token)
         uid = decoded_token['uid']
         user_record = auth.get_user(uid)
-        print(user_record)
         return user_record
     except Exception as e:
         print(e)

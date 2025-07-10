@@ -1,7 +1,7 @@
 from fastapi import WebSocketDisconnect
 import asyncio
 import json
-from services.reading_tracker_service import ReadingTracker
+from app.services.reading_tracker_service import ReadingTracker
 from vosk import Model, KaldiRecognizer
 
 

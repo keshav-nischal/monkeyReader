@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 
-# Automatically find and load .env from the project root or current directory
+from sqlalchemy import select
 load_dotenv()
 from collections import deque
 from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket
@@ -12,11 +12,11 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 import asyncio
 
 from app.database.main import Base, get_sql_session, engine
-from app.models import Book
-from services.reading_tracker_service import Passage, ReadingTracker, WordMatcher
-from services.mic_stream_service import micDataProducer
-from services.translate_service import translationConsumer  
-from services.auth_service import verify_token_and_get_user
+from app.models import Book, UserBookRelation, UserBookProgress
+from app.services.reading_tracker_service import Passage, ReadingTracker, WordMatcher
+from app.services.mic_stream_service import micDataProducer
+from app.services.translate_service import translationConsumer  
+from app.services.auth_service import verify_token_and_get_user
 from dotenv import load_dotenv
 
 #server
@@ -42,52 +42,23 @@ async def read_root():
     return {"message": "Server is running"}
 
 @app.get("/books/all")   
-async def all_books():
-    books = [
-        {
-            "id": 1,
-            "name": "1984",
-            "author": "George Orwell",
-            "total_pages": 328,
-            "genre": "Dystopian",
-            "price": 15,
-            "img_link": "https://example.com/1984.jpg"
-        },
-        {
-            "id": 2,
-            "name": "Brave New World",
-            "author": "Aldous Huxley",
-            "total_pages": 311,
-            "genre": "Science Fiction",
-            "price": 18,
-            "img_link": "https://example.com/bravenewworld.jpg"
-        },
-        {
-            "id": 3,
-            "name": "To Kill a Mockingbird",
-            "author": "Harper Lee",
-            "total_pages": 281,
-            "genre": "Classic",
-            "price": 12,
-            "img_link": "https://example.com/tokillamockingbird.jpg"
-        },
-        {
-            "id": 4,
-            "name": "The Great Gatsby",
-            "author": "F. Scott Fitzgerald",
-            "total_pages": 180,
-            "genre": "Classic",
-            "price": 10,
-            "img_link": "https://example.com/thegreatgatsby.jpg"
-        },
-    ]
+async def all_books(sql_session = Depends(get_sql_session)):
+    all_books_query = select(Book)
+    books = sql_session.scalars(all_books_query).all()
     return books
 
 @app.get("/books/owned")
-async def owned_books(user = Depends(verify_token_and_get_user), sql_session = Depends(get_sql_session)):
-    print(user)
-    books = sql_session.query(Book).all()
-    print(books)
+async def owned_books(detailed, user = Depends(verify_token_and_get_user), sql_session = Depends(get_sql_session)):
+    stmt = select(UserBookRelation.book_id).where(
+        UserBookRelation.user_id == user.uid,
+        UserBookRelation.relation_type == UserBookRelation.RelationType.OWNED
+    )
+
+    owned_book_ids = sql_session.scalars(stmt).all()
+    if(detailed):
+        stmt = select(UserBookProgress).where(UserBookProgress.book_id in owned_book_ids)
+    return owned_book_ids
+        
 
 @app.websocket("/ws") 
 async def websocket_endpoint(websocket: WebSocket):
@@ -136,7 +107,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 #auth -> check the  book owning status, history for current page number -> get content -> start the timer -> reading and transalations ->  end timer check if the page has been read or not(by checking if the last word is marked and if the 80 percent of content was read correctly) -> mark the history ->
 def main():
-    uvicorn.run("main:app", host="127.0.0.1", port=8012, reload=True)
+        uvicorn.run("main:app", host="127.0.0.1", port=8012, reload=True)
     # # passage_string = "He paused, his eyes darting to the telescreen, a square of frosted glass that dominated one wall. It was always watching, always listening. Even in his tiny, squalid flat, there was no escape. The thought of Julia, and the few illicit moments they had stolen, sent a flicker of warmth through him, quickly extinguished by the ever-present dread. He knew the risks. Everyone knew. A whisper, a glance, an unspoken thought any deviation from the Party line could mean torture, re-education, or worse, vaporisation. His own memory was a minefield, constantly being reshaped by the Ministry of Truth, leaving him with a gnawing uncertainty about even the most basic facts. He picked up his pen, a forbidden act in itself, and hesitated. To write was to commit a thought to paper, an undeniable act of defiance. The very air seemed to thicken with the unspoken laws that governed every breath."
     # passage_string = "The cat sits on the mat. It is a sunny day. The bird flies in the sky. I like to read books. We go to the park today. My friend has a red car. She drives to work every day. The store is open now. I need to buy some milk and bread. The children play in the yard. The dog runs fast. It likes to catch the ball. We eat lunch at noon. The food tastes good. My mom cooks very well.The house is big and white. It has three rooms. The garden has many flowers. They are red and yellow. The tree gives good shade.I wake up early in the morning. The sun comes up slowly. Birds make nice sounds. I drink coffee and read the news. Then I get ready for work.The weather is nice today. It is not too hot or cold. People walk outside and smile. Kids ride their bikes on the street. Everyone seems happy.At night we watch TV together. The shows are funny. We laugh a lot. Then we go to sleep. Tomorrow will be another good day.The water in the lake is clear. Fish swim near the rocks. We can see them from the boat. It is peaceful here."
     # passage = Passage(passage_string)
